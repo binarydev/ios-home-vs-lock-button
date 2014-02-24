@@ -10,9 +10,26 @@
 
 @implementation AppDelegate
 
+static void displayStatusChanged(CFNotificationCenterRef center,
+                                 void *observer,
+                                 CFStringRef name,
+                                 const void *object,
+                                 CFDictionaryRef userInfo) {
+  if (name == CFSTR("com.apple.springboard.lockcomplete")) {
+    [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"kDisplayStatusLocked"];
+    [[NSUserDefaults standardUserDefaults] synchronize];
+  }
+}
+
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
     // Override point for customization after application launch.
+    CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
+                                  NULL,
+                                  displayStatusChanged,
+                                  CFSTR("com.apple.springboard.lockcomplete"),
+                                  NULL,
+                                  CFNotificationSuspensionBehaviorDeliverImmediately);
     return YES;
 }
 							
@@ -26,11 +43,23 @@
 {
   // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later. 
   // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
+  UIApplicationState state = [[UIApplication sharedApplication] applicationState];
+  if (state == UIApplicationStateInactive) {
+    NSLog(@"Sent to background by locking screen");
+  } else if (state == UIApplicationStateBackground) {
+    if (![[NSUserDefaults standardUserDefaults] boolForKey:@"kDisplayStatusLocked"]) {
+      NSLog(@"Sent to background by home button/switching to other app");
+    } else {
+      NSLog(@"Sent to background by locking screen");
+    }
+  }
 }
 
 - (void)applicationWillEnterForeground:(UIApplication *)application
 {
   // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
+  [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"kDisplayStatusLocked"];
+  [[NSUserDefaults standardUserDefaults] synchronize];
 }
 
 - (void)applicationDidBecomeActive:(UIApplication *)application
@@ -42,5 +71,6 @@
 {
   // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
 }
+
 
 @end
