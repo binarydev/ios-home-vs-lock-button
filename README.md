@@ -5,3 +5,6 @@ This project describes how to detect when a user presses the home button to leav
 
 
 It utilizes CSNotificationCenter to detect Darwin notifications.
+
+
+*credit goes out to [wqq on stackoverflow](http://stackoverflow.com/users/889286/wqq)*
